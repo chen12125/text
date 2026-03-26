@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推箱子游戏 - Sokoban</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .info {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .game-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        #game-board {
+            display: grid;
+            gap: 2px;
+            background: #333;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            border-radius: 3px;
+        }
+
+        .wall {
+            background: #555;
+        }
+
+        .floor {
+            background: #f0f0f0;
+        }
+
+        .target {
+            background: #ff6b6b;
+        }
+
+        .box {
+            background: #f9ca24;
+        }
+
+        .box-on-target {
+            background: #6ab04c;
+        }
+
+        .player {
+            background: #48dbfb;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 5px;
+        }
+
+        .d-btn {
+            font-size: 24px;
+        }
+
+        .d-btn.up { grid-column: 2; grid-row: 1; }
+        .d-btn.left { grid-column: 1; grid-row: 2; }
+        .d-btn.right { grid-column: 3; grid-row: 2; }
+        .d-btn.down { grid-column: 2; grid-row: 3; }
+
+        .level-select {
+            margin-top: 15px;
+            color: white;
+        }
+
+        .level-select select {
+            padding: 8px 15px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            margin-left: 10px;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 15px;
+            background: #6ab04c;
+            color: white;
+            border-radius: 5px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .instructions {
+            margin-top: 20px;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>📦 推箱子游戏</h1>
+    <div class="info">
+        <span>关卡：<span id="level-display">1</span></span> | 
+        <span>步数：<span id="moves-display">0</span></span>
+    </div>
+
+    <div class="game-container">
+        <div id="game-board"></div>
+        
+        <div class="controls">
+            <div class="d-pad">
+                <button class="btn d-btn up" onclick="move(-1, 0)">⬆️</button>
+                <button class="btn d-btn left" onclick="move(0, -1)">⬅️</button>
+                <button class="btn d-btn right" onclick="move(0, 1)">➡️</button>
+                <button class="btn d-btn down" onclick="move(1, 0)">⬇️</button>
+            </div>
+            
+            <button class="btn" onclick="resetLevel()">🔄 重置关卡</button>
+            <button class="btn" onclick="prevLevel()">⬅️ 上一关</button>
+            <button class="btn" onclick="nextLevel()">下一关 ➡️</button>
+        </div>
+
+        <div class="level-select">
+            <label>选择关卡：</label>
+            <select id="level-select" onchange="changeLevel()"></select>
+        </div>
+
+        <div id="message" class="message">🎉 恭喜通关！</div>
+    </div>
+
+    <div class="instructions">
+        <p>🎮 使用方向键或 WASD 移动，也可以点击屏幕按钮</p>
+        <p>📦 把所有箱子推到红色目标位置即可通关</p>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
