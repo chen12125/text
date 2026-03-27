@@ -20,7 +20,30 @@ class SokobanGame:
             'box': (180, 140, 100),
             'box_on_target': (100, 180, 100),
             'text': (50, 50, 50),
+            'developer_bg': (200, 220, 255),  # 开发者话语背景
+            'developer_border': (100, 150, 200),  # 开发者话语边框
+            'developer_text': (30, 30, 100),  # 开发者话语文字
         }
+        
+        # 开发者的话
+        self.show_developer_message = False
+        self.developer_message = [
+            "👨‍💻 开发者的话",
+            "",
+            "欢迎体验推箱子游戏!",
+            "",
+            "这个游戏是我用心制作的",
+            "希望能给你带来快乐和挑战。",
+            "",
+            "关卡设计经过精心安排，",
+            "每一关都有独特的解法思路。",
+            "",
+            "推箱子不仅是游戏，",
+            "更是锻炼逻辑思维的好方式。",
+            "",
+            "感谢你的游玩！",
+            "祝你玩得开心！😊"
+        ]
     
     def reset_game(self):
         """重置游戏到第一关"""
@@ -98,6 +121,10 @@ class SokobanGame:
             return self.load_level(self.current_level)
         return False
     
+    def toggle_developer_message(self):
+        """切换开发者的话显示/隐藏"""
+        self.show_developer_message = not self.show_developer_message
+    
     def draw(self):
         """绘制游戏画面"""
         self.screen.fill(self.colors['floor'])
@@ -158,7 +185,7 @@ class SokobanGame:
         self.screen.blit(text_surface, (10, self.height + 8))
         
         # 绘制提示
-        hint_text = "Arrow Keys: Move | R: Reset | N: Next | P: Prev | ESC: Quit"
+        hint_text = "Arrow Keys: Move | R: Reset | N: Next | P: Prev | D: Dev Message | ESC: Quit"
         hint_surface = font.render(hint_text, True, self.colors['text'])
         self.screen.blit(hint_surface, (self.width - hint_surface.get_width() - 10, self.height + 8))
         
@@ -172,7 +199,63 @@ class SokobanGame:
             pygame.draw.rect(self.screen, (50, 150, 50), win_rect.inflate(20, 20), 3)
             self.screen.blit(win_surface, win_rect)
         
+        # 如果需要显示开发者的话
+        if self.show_developer_message:
+            self.draw_developer_message()
+        
         pygame.display.flip()
+    
+    def draw_developer_message(self):
+        """绘制开发者的话"""
+        # 创建半透明覆盖层
+        overlay = pygame.Surface((self.width, self.height))
+        overlay.set_alpha(180)  # 半透明度
+        overlay.fill((0, 0, 0))  # 黑色背景
+        self.screen.blit(overlay, (0, 0))
+        
+        # 计算消息框尺寸
+        margin = 30
+        padding = 20
+        line_height = 30
+        
+        box_width = max([len(line.encode('utf-8')) * 12 for line in self.developer_message]) + padding * 2
+        box_width = max(box_width, 400)  # 最小宽度
+        box_height = len(self.developer_message) * line_height + padding * 2
+        
+        # 居中计算位置
+        box_x = (self.width - box_width) // 2
+        box_y = (self.height - box_height) // 2
+        
+        # 绘制消息框背景
+        bg_rect = pygame.Rect(box_x, box_y, box_width, box_height)
+        pygame.draw.rect(self.screen, self.colors['developer_bg'], bg_rect)
+        pygame.draw.rect(self.screen, self.colors['developer_border'], bg_rect, 3)
+        
+        # 绘制标题
+        title_font = pygame.font.Font(None, 36)
+        title_surface = title_font.render("👨‍💻 开发者的话", True, self.colors['developer_text'])
+        title_rect = title_surface.get_rect()
+        title_rect.midtop = (self.width // 2, box_y + padding // 2)
+        self.screen.blit(title_surface, title_rect)
+        
+        # 绘制消息内容
+        font = pygame.font.Font(None, 28)
+        for i, line in enumerate(self.developer_message[1:]):  # 跳过标题
+            if line.strip():  # 非空行
+                text_surface = font.render(line, True, self.colors['developer_text'])
+            else:  # 空行
+                text_surface = font.render("", True, self.colors['developer_text'])
+            
+            text_rect = text_surface.get_rect()
+            text_rect.midtop = (self.width // 2, box_y + padding + 30 + i * line_height)
+            self.screen.blit(text_surface, text_rect)
+        
+        # 绘制关闭提示
+        hint_font = pygame.font.Font(None, 24)
+        hint_surface = hint_font.render("按 D 键关闭", True, self.colors['developer_text'])
+        hint_rect = hint_surface.get_rect()
+        hint_rect.midbottom = (self.width // 2, box_y + box_height - 10)
+        self.screen.blit(hint_surface, hint_rect)
     
     def run(self):
         """运行游戏主循环"""
@@ -199,6 +282,8 @@ class SokobanGame:
                             self.next_level()
                     elif event.key == pygame.K_p:
                         self.prev_level()
+                    elif event.key == pygame.K_d:
+                        self.toggle_developer_message()
             
             self.draw()
             self.clock.tick(60)
