@@ -44,7 +44,7 @@ class SokobanGame:
             "感谢你的游玩！",
             "祝你玩得开心！😊",
             "",
-            "—— 陈召"
+            "—— 陈某某"
         ]
     
     def reset_game(self):
