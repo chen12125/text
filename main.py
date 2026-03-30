@@ -16,6 +16,7 @@ def main():
     print("  N - 下一关 (通关后)")
     print("  P - 上一关")
     print("  D - 开发者的话")
+    print("  S - 游戏统计")
     print("  ESC - 退出游戏")
     print("=" * 40)
     print("正在启动游戏...")

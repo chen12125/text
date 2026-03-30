@@ -9,6 +9,14 @@ class SokobanGame:
         self.screen = None
         self.clock = None
         self.current_level = 0
+        
+        # 统计系统变量
+        self.total_moves = 0          # 总移动步数
+        self.total_resets = 0         # 总重置次数
+        self.start_time = pygame.time.get_ticks()  # 游戏开始时间
+        self.completed_levels = set() # 已通关的关卡
+        self.show_stats = False       # 是否显示详细统计信息
+        
         self.reset_game()
         
         # 颜色定义
@@ -50,6 +58,10 @@ class SokobanGame:
     def reset_game(self):
         """重置游戏到第一关"""
         self.current_level = 0
+        self.total_moves = 0
+        self.total_resets = 0
+        self.start_time = pygame.time.get_ticks()
+        self.completed_levels = set()
         self.load_level(0)
     
     def load_level(self, level_index):
@@ -99,6 +111,7 @@ class SokobanGame:
         
         # 移动玩家
         self.player_pos = new_pos
+        self.total_moves += 1
         return True
     
     def check_win(self):
@@ -107,11 +120,14 @@ class SokobanGame:
     
     def reset_level(self):
         """重置当前关卡"""
+        self.total_resets += 1
         self.load_level(self.current_level)
     
     def next_level(self):
         """进入下一关"""
         if self.current_level < get_level_count() - 1:
+            # 记录当前关卡为已完成
+            self.completed_levels.add(self.current_level)
             self.current_level += 1
             return self.load_level(self.current_level)
         return False
@@ -126,6 +142,14 @@ class SokobanGame:
     def toggle_developer_message(self):
         """切换开发者的话显示/隐藏"""
         self.show_developer_message = not self.show_developer_message
+    
+    def show_statistics(self):
+        """显示详细统计信息"""
+        self.show_stats = True
+    
+    def hide_statistics(self):
+        """隐藏统计信息"""
+        self.show_stats = False
     
     def draw(self):
         """绘制游戏画面"""
@@ -186,8 +210,14 @@ class SokobanGame:
         text_surface = font.render(level_text, True, self.colors['text'])
         self.screen.blit(text_surface, (10, self.height + 8))
         
+        # 绘制统计信息
+        elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000
+        stats_text = f"Moves: {self.total_moves} | Resets: {self.total_resets} | Time: {elapsed_time}s"
+        stats_surface = font.render(stats_text, True, self.colors['text'])
+        self.screen.blit(stats_surface, (10, self.height + 35))
+        
         # 绘制提示
-        hint_text = "Arrow Keys: Move | R: Reset | N: Next | P: Prev | D: Dev Message | ESC: Quit"
+        hint_text = "Arrow Keys: Move | R: Reset | N: Next | P: Prev | D: Dev Msg | S: Stats | ESC: Quit"
         hint_surface = font.render(hint_text, True, self.colors['text'])
         self.screen.blit(hint_surface, (self.width - hint_surface.get_width() - 10, self.height + 8))
         
@@ -204,6 +234,10 @@ class SokobanGame:
         # 如果需要显示开发者的话
         if self.show_developer_message:
             self.draw_developer_message()
+        
+        # 如果需要显示详细统计信息
+        if self.show_stats:
+            self.draw_statistics()
         
         pygame.display.flip()
     
@@ -259,6 +293,74 @@ class SokobanGame:
         hint_rect.midbottom = (self.width // 2, box_y + box_height - 10)
         self.screen.blit(hint_surface, hint_rect)
     
+    def draw_statistics(self):
+        """绘制详细统计信息"""
+        # 创建半透明覆盖层
+        overlay = pygame.Surface((self.width, self.height))
+        overlay.set_alpha(180)  # 半透明度
+        overlay.fill((0, 0, 0))  # 黑色背景
+        self.screen.blit(overlay, (0, 0))
+        
+        # 计算统计信息框尺寸
+        margin = 30
+        padding = 20
+        line_height = 30
+        
+        # 准备统计信息内容
+        elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000
+        completed_count = len(self.completed_levels)
+        total_levels = get_level_count()
+        
+        stats_lines = [
+            "📊 游戏统计",
+            "",
+            f"总移动步数: {self.total_moves}",
+            f"总重置次数: {self.total_resets}",
+            f"游戏时间: {elapsed_time} 秒",
+            f"已通关关卡: {completed_count}/{total_levels}",
+            "",
+            "按 S 键关闭统计"
+        ]
+        
+        box_width = max([len(line.encode('utf-8')) * 12 for line in stats_lines]) + padding * 2
+        box_width = max(box_width, 400)  # 最小宽度
+        box_height = len(stats_lines) * line_height + padding * 2
+        
+        # 居中计算位置
+        box_x = (self.width - box_width) // 2
+        box_y = (self.height - box_height) // 2
+        
+        # 绘制统计信息框背景
+        bg_rect = pygame.Rect(box_x, box_y, box_width, box_height)
+        pygame.draw.rect(self.screen, self.colors['developer_bg'], bg_rect)
+        pygame.draw.rect(self.screen, self.colors['developer_border'], bg_rect, 3)
+        
+        # 绘制标题
+        title_font = pygame.font.Font(None, 36)
+        title_surface = title_font.render("📊 游戏统计", True, self.colors['developer_text'])
+        title_rect = title_surface.get_rect()
+        title_rect.midtop = (self.width // 2, box_y + padding // 2)
+        self.screen.blit(title_surface, title_rect)
+        
+        # 绘制统计内容
+        font = pygame.font.Font(None, 28)
+        for i, line in enumerate(stats_lines[1:]):  # 跳过标题
+            if line.strip():  # 非空行
+                text_surface = font.render(line, True, self.colors['developer_text'])
+            else:  # 空行
+                text_surface = font.render("", True, self.colors['developer_text'])
+            
+            text_rect = text_surface.get_rect()
+            text_rect.midtop = (self.width // 2, box_y + padding + 30 + i * line_height)
+            self.screen.blit(text_surface, text_rect)
+        
+        # 绘制关闭提示
+        hint_font = pygame.font.Font(None, 24)
+        hint_surface = hint_font.render("按 S 键关闭", True, self.colors['developer_text'])
+        hint_rect = hint_surface.get_rect()
+        hint_rect.midbottom = (self.width // 2, box_y + box_height - 10)
+        self.screen.blit(hint_surface, hint_rect)
+    
     def run(self):
         """运行游戏主循环"""
         running = True
@@ -286,6 +388,11 @@ class SokobanGame:
                         self.prev_level()
                     elif event.key == pygame.K_d:
                         self.toggle_developer_message()
+                    elif event.key == pygame.K_s:
+                        if self.show_stats:
+                            self.hide_statistics()
+                        else:
+                            self.show_statistics()
             
             self.draw()
             self.clock.tick(60)
